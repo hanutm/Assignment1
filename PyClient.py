@@ -3,12 +3,24 @@
 import socket 
 
 def join():
-	
+	chatroom = input('Enter Chatroom name to enter')
 
+	conn_msg = "JOIN_CHATROOM:".encode('utf-8') + chatroom.encode('utf-8') + "\n".encode('utf-8')
+	conn_msg += "CLIENT IP: \n".encode('utf-8')
+	conn_msg += "PORT: \n".encode('utf-8')
+	conn_msg += "CLIENT_NAME:".encode('utf-8') + Cname.encode('utf-8') + "\n".encode('utf-8')
 
+	s.send(conn_msg)
 
+def chat():
+	pass
 
- 
+def leave():
+	pass
+
+def discon():
+	pass
+
 # create a socket object 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
  
@@ -19,15 +31,8 @@ port = 50000
 # connection to hostname on the port. 
 s.connect((host, port))                                
 
-chatroom = input('Enter Chatroom name to enter')
 Cname = input('Give Client Name')
-
-conn_msg = "JOIN_CHATROOM:".encode('utf-8') + chatroom.encode('utf-8') + "\n".encode('utf-8')
-conn_msg += "CLIENT IP: \n".encode('utf-8')
-conn_msg += "PORT: \n".encode('utf-8')
-conn_msg += "CLIENT_NAME:".encode('utf-8') + Cname.encode('utf-8') + "\n".encode('utf-8')
-
-s.send(conn_msg)
+join()
 
 while(1):
 	message = s.recv(1024)
