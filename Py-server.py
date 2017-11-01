@@ -4,7 +4,7 @@
 #		3.Error Handling
 
 
-import socket,sys
+import socket,sys,os
 from threading import Thread
 import random
 
@@ -27,7 +27,7 @@ def join(conn_msg,csock):
 	gname_end = conn_msg.find('\n'.encode('utf-8'))-1
 	groupname = conn_msg[gname:gname_end]
 
-	cname = conn_msg.find('CLIENT_NAME'.encode('utf-8'))+13
+	cname = conn_msg.find('CLIENT_NAME'.encode('utf-8'))+12
 	cname_end = conn_msg.find(' '.encode('utf-8'),cname)
 	clientname = conn_msg[cname:cname_end]
 	rID = 0
@@ -43,15 +43,17 @@ def join(conn_msg,csock):
 	response += "SERVER_IP: \n".encode('utf-8')
 	response += "PORT: \n".encode('utf-8')
 	response += "ROOM_REF: ".encode('utf-8') + str(rID).encode('utf-8') +'\n'.encode('utf-8')
-	response += "JOIN_ID: ".encode('utf-8') + str(clThread.uid).encode('utf-8')   
+	response += "JOIN_ID: ".encode('utf-8') + str(clThread.uid).encode('utf-8') + "\n".encode('utf-8')
 
 	csock.send(response)
 	return groupname,clientname
 
 def discon():
-	clThread.exit()
+	print(type(clThread))
+	os._exit(1)
 
 def leave(conn_msg,csock):
+	print('leaving')
 	grp_start = conn_msg.find('LEAVE_CHATROOM:'.encode('utf-8')) + 15
 	grp_end = conn_msg.find('\n'.encode('utf-8'), grp_start) - 1
 
@@ -71,6 +73,7 @@ def leave(conn_msg,csock):
 		g2_clients.remove(self.clientname)
 		for x in g2_clients:
 			(g2_clients[x].socket).send(chat_text)
+	print('Responsing')
 	csock.send(response)
 	
 
@@ -86,13 +89,14 @@ def chat(conn_msg,csock):
 	group_name = conn_msg[grp_start:grp_end]
 	
 	chat_text = 'CHAT:'.encode('utf-8') + chat_msg + '\n'.encode('utf-8')			##change to Room number
-	chat_text += 'CLIENT_NAME:'.encode('utf-8') +str(clThread.clientid).encode('utf-8')
+	chat_text += 'CLIENT_NAME:'.encode('utf-8') +str(clThread.uid).encode('utf-8')
 	chat_text += 'MESSAGE: ' + chat_msg.encode('utf-8') 
 	
-	if group_name == g1:
+	if group_name == b'g1':
 		for x in g1_clients:
+			print(g1_clients[x])
 			(g1_clients[x].socket).send(chat_text)
-	elif group_name == g2:
+	elif group_name == b'g2':
 		for x in g2_clients:
 			(g2_clients[x].socket).send(chat_text)
 	
@@ -117,13 +121,13 @@ class client_threads(Thread):
 				 print('joining')
 				 self.roomname,self.clientname = join(conn_msg,csock)
 			elif cflag == 2 : leave(conn_msg,csock)
-			elif cflag == 3 : discon(csock)
-			elif cflag == 4 : chat()
+			elif cflag == 3 : break
+			elif cflag == 4 : chat(conn_msg,csock)
 			else : pass					 #error code for incorrect message	
-			print(self.clientname)
+#			print(self.clientname)
 			self.chatroom.append(self.roomname)
-			print('roomnames')
-			print(self.chatroom)
+#			print('roomnames')
+#			print(self.chatroom)
 
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -147,6 +151,6 @@ while True:
 	clThread = client_threads(ip,port,csock)
 	clThread.start()
 	thread_count.append(clThread)
-	print("Threads :")
-	print(thread_count)
-	print(g1_clients)
+#	print("Threads :")
+#	print(thread_count)
+#	print(g1_clients)
