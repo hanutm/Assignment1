@@ -10,6 +10,7 @@ from threading import Thread
 import random
 
 def check_msg(msg):
+	print('Checking')
 	if (msg.find('JOIN_CHATROOM'.encode('utf-8'))+1):
 		return(1)	
 	elif (msg.find('LEAVE_CHATROOM'.encode('utf-8'))+1):
@@ -22,6 +23,7 @@ def check_msg(msg):
 		return(5)
 
 def join(conn_msg,csock):
+	print('Joiner')
 	gname = conn_msg.find(':'.encode('utf-8'))+2
 	gname_end = conn_msg.find('\n'.encode('utf-8'))-1
 	groupname = conn_msg[gname:gname_end]
@@ -29,14 +31,14 @@ def join(conn_msg,csock):
 	cname = conn_msg.find('CLIENT_NAME'.encode('utf-8'))+13
 	cname_end = conn_msg.find(' '.encode('utf-8'),cname)
 	clientname = conn_msg[cname:cname_end]
+	rID = 0
 	
-	if groupname == 'g1' :
+	if (groupname.decode('utf-8')) == 'g1' :
 		g1_clients.append(clThread)
 		rID = 1001
 	elif groupname == 'g2' :
 		g2_clients.append(clThread)
 		rID = 1002
-
 	#sending ackowledgement
 	response = "JOINED_CHATROOM: ".encode('utf-8') + groupname+ "\n".encode('utf-8')
 	response += "SERVER_IP: \n".encode('utf-8')
@@ -68,16 +70,18 @@ def chat(conn_msg,csock):
 
 	group_name = conn_msg[grp_start:grp_end]
 	
-	chat_text = 'CHAT:'.encode('utf-8') + chat_msg + '\n'.encode('utf-8')
+	chat_text = 'CHAT:'.encode('utf-8') + chat_msg + '\n'.encode('utf-8')			##change to Room number
 	chat_text += 'CLIENT_NAME:'.encode('utf-8') +str(clThread.clientid).encode('utf-8')
 	chat_text += 'MESSAGE: ' + chat_msg.encode('utf-8') 
+	
+	print(chat_text)
 
 	if group_name == g1:
-		for x in g1:
-			(g1[x].socket).send(chat_text)
+		for x in g1_clients:
+			(g1_clients[x].socket).send(chat_text)
 	elif group_name == g2:
-		for x in g2:
-			(g2[x].socket).send(chat_text)
+		for x in g2_clients:
+			(g2_clients[x].socket).send(chat_text)
 	
 class client_threads(Thread):
 
@@ -88,13 +92,15 @@ class client_threads(Thread):
 		self.chatroom =[] 
 		self.socket = socket
 		self.uid = random.randint(1000,2000)
+		self.roomname = ''
 
 	def run(self):
 		while True:
 			conn_msg = csock.recv(1024)
 			cflag = check_msg(conn_msg)
-#			print(conn_msg)
+			print('Connected')
 			if cflag == 1 :
+				 print('joining')
 				 self.roomname,self.clientid = join(conn_msg,csock)
 			elif cflag == 2 : leave()
 			elif cflag == 3 : discon(csock)
@@ -103,7 +109,7 @@ class client_threads(Thread):
 #			print(self.name)
 			self.chatroom.append(self.roomname)
 #			print('roomnames')
-#			print(self.chatroom)
+			print(self.chatroom)
 
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -129,3 +135,4 @@ while True:
 	thread_count.append(clThread)
 	print("Threads :")
 	print(thread_count)
+	print(g1_clients)
