@@ -4,7 +4,7 @@
 #		3.Error Handling
 
 
-import socket
+import socket,sys
 from threading import Thread
 import random
 
@@ -128,7 +128,7 @@ class client_threads(Thread):
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 host = socket.gethostname()
-port = 50000
+port = int(sys.argv[1])
 server.bind((host,port))
 print(host)
 thread_count = [] 
