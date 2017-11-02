@@ -11,7 +11,6 @@ def join():
 	conn_msg += "CLIENT IP: \n".encode('utf-8')
 	conn_msg += "PORT: \n".encode('utf-8')
 	conn_msg += "CLIENT_NAME:".encode('utf-8') + Cname.encode('utf-8') + "\n".encode('utf-8')
-	print(conn_msg)
 	s.send(conn_msg)
 
 def chat(socket):
@@ -59,7 +58,7 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # get local machine name 
 host = input('Enter Hostname ')
  
-port = input('Impprt Port ') 
+port = input('Input Port ') 
 # connection to hostname on the port. 
 s.connect((host, int(port)))                                
 Cname = input('Give Client Name ')

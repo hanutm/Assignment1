@@ -1,6 +1,5 @@
 ## ChartServer code using sockets
 
-### tasks left -1.creating chatroom list
 #		3.Error Handling
 
 
@@ -9,7 +8,6 @@ from threading import Thread
 import random
 
 def check_msg(msg):
-	print('Checking')
 	if (msg.find('JOIN_CHATROOM'.encode('utf-8'))+1):
 		return(1)	
 	elif (msg.find('LEAVE_CHATROOM'.encode('utf-8'))+1):
@@ -22,7 +20,6 @@ def check_msg(msg):
 		return(5)
 
 def join(conn_msg,csock):
-	print('Joiner')
 	gname = conn_msg.find('JOIN_CHATROOM:'.encode('utf-8'))+14
 	gname_end = conn_msg.find('\n'.encode('utf-8'))
 	groupname = conn_msg[gname:gname_end]
@@ -50,9 +47,6 @@ def join(conn_msg,csock):
 	csock.send(response)
 	return groupname,clientname,rID
 
-def discon():
-	print(type(clThread))
-	os._exit(1)
 
 def leave(conn_msg,csock):
 	print('leaving')
@@ -67,7 +61,6 @@ def leave(conn_msg,csock):
 	grpmessage = "CLIENT_NAME:".encode('utf-8') + (clThread.clientname).encode('utf-8') + "\n".encode('utf-8')
 	grpmessage += "CLIENT_ID:".encode('utf-8') + str(clThread.uid).encode('utf-8') +"\n".encode('utf-8')
 	grpmessage += "LEFT GROUP".encode('utf-8')
-	print(i)
 	print(group_name)
 	if (group_name.decode('utf-8')) == 'g1':
 		i = g1_clients.index(clThread.socket)
@@ -75,7 +68,7 @@ def leave(conn_msg,csock):
 		for x in g1_clients:
 			g1_clients[x].send(chat_text)
 	elif (group_name.decode('utf-8')) == 'g2':
-		i = g1_clients.index(clThread.socket)
+		i = g2_clients.index(clThread.socket)
 		del g2_clients[i]
 		for x in g2_clients:
 			g2_clients[x].send(chat_text)
@@ -83,7 +76,6 @@ def leave(conn_msg,csock):
 	
 
 def chat(conn_msg,csock):
-	print('chat recvd')
 	chat_msg_start = conn_msg.find('MESSAGE:'.encode('utf-8')) + 9
 	chat_msg_end = conn_msg.find('\n\n'.encode('utf-8'),chat_msg_start) 
 
@@ -99,15 +91,9 @@ def chat(conn_msg,csock):
 	chat_text += 'MESSAGE: ' + chat_msg.encode('utf-8')
 	if (group_name.decode('utf-8')) == 'g1':
 		for x in range(len(g1_clients)):
-			i = g1_clients.index(clThread.socket)
-			if x == i:
-				continue
 			g1_clients[x].send(chat_text)
 	elif group_name == 'g2':
 		for x in g2_clients:
-			i = g2_clients.index(clThread.socket)
-			if x == i:
-				continue
 			g2_clients[x].send(chat_text)
 	
 class client_threads(Thread):
@@ -126,20 +112,22 @@ class client_threads(Thread):
 	def run(self):
 		while True:
 			conn_msg = csock.recv(1024)
+			print('CM')
+			print(conn_msg)
 			cflag = check_msg(conn_msg)
-			print('Connected')
 			if cflag == 1 :
-				 print('joining')
 				 self.roomname,self.clientname,self.roomID = join(conn_msg,csock)
 			elif cflag == 2 : leave(conn_msg,csock)
-			elif cflag == 3 : break
+			elif cflag == 3 : return(0)
 			elif cflag == 4 : chat(conn_msg,csock)
-			else : pass					 #error code for incorrect message	
-#			print(self.clientname)
+			else : print('Error code. Wait for more')
 			self.chatroom.append(self.roomname)
-#			print('roomnames')
-#			print(self.chatroom)
-
+			print('Total clients in group g1: ')
+			print(len(g1_clients))
+			print('Total clients in group g2: ')
+			print(len(g2_clients))
+	def stop(self):
+		self._stop_event.set()
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 host = socket.gethostname()
@@ -162,6 +150,3 @@ while True:
 	clThread = client_threads(ip,port,csock)
 	clThread.start()
 	thread_count.append(clThread)
-#	print("Threads :")
-#	print(thread_count)
-#	print(g1_clients)
