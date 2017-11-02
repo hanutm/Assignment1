@@ -48,7 +48,7 @@ def join(conn_msg,csock):
 	response += "JOIN_ID: ".encode('utf-8') + str(clThread.uid).encode('utf-8') + "\n".encode('utf-8')
 
 	csock.send(response)
-	return groupname,clientname
+	return groupname,clientname,rID
 
 def discon():
 	print(type(clThread))
@@ -94,7 +94,7 @@ def chat(conn_msg,csock):
 
 	group_name = conn_msg[grp_start:grp_end]
 	
-	chat_text = 'CHAT: '.encode('utf-8') + group_name + '\n'.encode('utf-8')			##change to Room number
+	chat_text = 'CHAT: '.encode('utf-8') + str(clThread.roomID).encode('utf-8') + '\n'.encode('utf-8')
 	chat_text += 'CLIENT_NAME: '.encode('utf-8') +str(clThread.clientname.encode('utf-8')) + '\n'.encode('utf-8')
 	chat_text += 'MESSAGE: ' + chat_msg.encode('utf-8')
 	if (group_name.decode('utf-8')) == 'g1':
@@ -121,6 +121,7 @@ class client_threads(Thread):
 		self.uid = random.randint(1000,2000)
 		self.roomname = ''
 		self.clientname = ''
+		self.roomID = ''
 
 	def run(self):
 		while True:
@@ -129,7 +130,7 @@ class client_threads(Thread):
 			print('Connected')
 			if cflag == 1 :
 				 print('joining')
-				 self.roomname,self.clientname = join(conn_msg,csock)
+				 self.roomname,self.clientname,self.roomID = join(conn_msg,csock)
 			elif cflag == 2 : leave(conn_msg,csock)
 			elif cflag == 3 : break
 			elif cflag == 4 : chat(conn_msg,csock)
