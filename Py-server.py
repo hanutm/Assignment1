@@ -16,8 +16,12 @@ def check_msg(msg):
 		return(3)
 	elif (msg.find('CHAT:'.encode('utf-8'))+1):
 		return(4)	
-	else:
+	elif (msg.find('KILL_SERVICE'.encode('utf-8'))+1):
+		os._exit(1)	
+	elif (msg.find('HELO'.encode('utf-8'))+1):
 		return(5)
+	else:
+		return(6)
 
 def join(conn_msg,csock):
 	gname = conn_msg.find('JOIN_CHATROOM:'.encode('utf-8'))+14
@@ -95,6 +99,9 @@ def chat(conn_msg,csock):
 	elif group_name == 'g2':
 		for x in g2_clients:
 			g2_clients[x].send(chat_text)
+
+def resp(msg,socket):
+	pass	
 	
 class client_threads(Thread):
 
@@ -120,14 +127,13 @@ class client_threads(Thread):
 			elif cflag == 2 : leave(conn_msg,csock)
 			elif cflag == 3 : return(0)
 			elif cflag == 4 : chat(conn_msg,csock)
+			elif cflag == 5 : resp(conn_msg,csock)
 			else : print('Error code. Wait for more')
 			self.chatroom.append(self.roomname)
 			print('Total clients in group g1: ')
 			print(len(g1_clients))
 			print('Total clients in group g2: ')
 			print(len(g2_clients))
-	def stop(self):
-		self._stop_event.set()
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 host = socket.gethostname()
