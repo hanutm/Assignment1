@@ -4,8 +4,10 @@
 
 
 import socket,sys,os
-from threading import Thread
+from threading import Thread,Lock
 import random
+
+threadLock = Lock()
 
 def check_msg(msg):
 	if (msg.find('JOIN_CHATROOM'.encode('utf-8'))+1):
@@ -24,6 +26,7 @@ def check_msg(msg):
 		return(6)
 
 def join(conn_msg,csock):
+	threadLock.acquire()
 	gname = conn_msg.find('JOIN_CHATROOM:'.encode('utf-8'))+14
 	gname_end = conn_msg.find('\n'.encode('utf-8'))
 	groupname = conn_msg[gname:gname_end]
@@ -49,6 +52,18 @@ def join(conn_msg,csock):
 	response += "JOIN_ID: ".encode('utf-8') + str(clThread.uid).encode('utf-8') + "\n".encode('utf-8')
 
 	csock.send(response)
+	grpmessage = "CHAT:".encode('utf-8') + str(rID).encode('utf-8') + "\n".encode('utf-8')
+	grpmessage += "CLIENT_NAME:".encode('utf-8') + clientname + "\n".encode('utf-8') 
+	grpmessage += "MESSAGE:".encode('utf-8') + clientname + "\n".encode('utf-8') 
+	grpmessage += "CLIENT_ID:".encode('utf-8') + str(clThread.uid).encode('utf-8') +"\n".encode('utf-8')
+	grpmessage += "JOINED_GROUP".encode('utf-8') +"\n".encode('utf-8')
+	if (groupname.decode('utf-8')) == 'room1':
+		for x in range(len(g1_clients)):
+			g1_clients[x].send(grpmessage)
+	elif (groupname.decode('utf-8')) == 'room2':
+		for x in range(len(g2_clients)):
+			g2_clients[x].send(grpmessage)
+	threadLock.release()
 	return groupname,clientname,rID
 
 
@@ -101,7 +116,17 @@ def chat(conn_msg,csock):
 			g2_clients[x].send(chat_text)
 
 def resp(msg,socket):
-	pass	
+	msg_start = msg.find('HELO:'.encode('utf-8')) + 5
+	msg_end = msg.find('\n'.encode('utf-8'),msg_start)
+
+	chat_msg = msg[msg_start:msg_end]
+
+	response = "HELO: ".encode('utf-8') + chat_msg + "\n".encode('utf-8')
+	response += "IP: ".encode('utf-8') + str(clThread.ip).encode('utf-8') + "\n".encode('utf-8')
+	response += "PORT: ".encode('utf-8') + str(clThread.port).encode('utf-8') + "\n".encode('utf-8')
+	response += "StudentID: ".encode('utf-8') + "17307932".encode('utf-8') + "\n".encode('utf-8')
+
+	socket.send(response)	
 	
 class client_threads(Thread):
 
@@ -137,7 +162,7 @@ class client_threads(Thread):
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 host = socket.gethostname()
-port = int(sys.argv[1])
+port = int(50000)
 server.bind((host,port))
 print(host)
 thread_count = [] 
