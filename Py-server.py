@@ -76,7 +76,7 @@ def join(conn_msg,csock):
 
 
 def leave(conn_msg,csock):
-	print('leaving')
+	threadLock.acquire()
 	grp_start = conn_msg.find('LEAVE_CHATROOM:'.encode('utf-8')) + 16
 	grp_end = conn_msg.find('\n'.encode('utf-8'), grp_start) 
 
@@ -100,7 +100,7 @@ def leave(conn_msg,csock):
 		for x in g2_clients:
 			g2_clients[x].send(chat_text)
 	csock.send(response)
-	
+	threadLock.release()	
 
 def chat(conn_msg,csock):
 	threadLock.acquire()
