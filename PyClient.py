@@ -61,6 +61,12 @@ host = input('Enter Hostname ')
 port = input('Input Port ') 
 # connection to hostname on the port. 
 s.connect((host, int(port)))                                
+
+##### test response from server
+test_send = "HELO text \n".encode('utf-8')
+s.send(test_send)
+print(s.recv(1024))
+
 Cname = input('Give Client Name ')
 join()
 jID=0
@@ -71,6 +77,8 @@ if p==0:
 	jID_start = data.find('JOIN_ID'.encode('utf-8'))+9
 	jID_end = data.find('\n'.encode('utf-8'),jID_start)-1
 	jID = str(data[jID_start:jID_end])
+
+
 
 serverThread = Client(s)
 serverThread.start()

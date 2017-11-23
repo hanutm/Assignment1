@@ -9,6 +9,8 @@ import random
 
 threadLock = Lock()
 
+roomList = []
+
 def check_msg(msg):
 	if (msg.find('JOIN_CHATROOM'.encode('utf-8'))+1):
 		return(1)	
@@ -36,11 +38,17 @@ def join(conn_msg,csock):
 	clientname = conn_msg[cname:cname_end]
 	rID = 0
 	
-	if (groupname.decode('utf-8')) == 'g1' :
+	if groupname in roomList:
+		pass
+	else:
+		roomList.append(groupname)
+		 
+	
+	if (groupname.decode('utf-8')) == 'room1' :
 		print('g1')
 		g1_clients.append(clThread.socket)
 		rID = 1001
-	elif groupname == 'g2' :
+	elif groupname == 'room2' :
 		g2_clients.append(clThread.socket)
 		rID = 1002
 	print(g1_clients)
@@ -95,6 +103,7 @@ def leave(conn_msg,csock):
 	
 
 def chat(conn_msg,csock):
+	threadLock.acquire()
 	chat_msg_start = conn_msg.find('MESSAGE:'.encode('utf-8')) + 9
 	chat_msg_end = conn_msg.find('\n\n'.encode('utf-8'),chat_msg_start) 
 
@@ -105,15 +114,16 @@ def chat(conn_msg,csock):
 
 	group_name = conn_msg[grp_start:grp_end]
 	
-	chat_text = 'CHAT: '.encode('utf-8') + str(clThread.roomID).encode('utf-8') + '\n'.encode('utf-8')
-	chat_text += 'CLIENT_NAME: '.encode('utf-8') +str(clThread.clientname.encode('utf-8')) + '\n'.encode('utf-8')
-	chat_text += 'MESSAGE: ' + chat_msg.encode('utf-8')
-	if (group_name.decode('utf-8')) == 'g1':
+	chat_text = "CHAT: ".encode('utf-8') + str(clThread.roomID).encode('utf-8') + "\n".encode('utf-8')
+	chat_text += "CLIENT_NAME: ".encode('utf-8') +str(clThread.clientname).encode('utf-8') + "\n".encode('utf-8')
+	chat_text += "MESSAGE: ".encode('utf-8') + str(chat_msg).encode('utf-8')
+	if (group_name.decode('utf-8')) == 'room1':
 		for x in range(len(g1_clients)):
 			g1_clients[x].send(chat_text)
-	elif group_name == 'g2':
+	elif group_name == 'room2':
 		for x in g2_clients:
 			g2_clients[x].send(chat_text)
+	threadLock.release()
 
 def resp(msg,socket):
 	msg_start = msg.find('HELO:'.encode('utf-8')) + 5
